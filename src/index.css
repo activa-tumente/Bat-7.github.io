@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optimización para reducir parpadeo */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Efectos para el banner */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
+}
+
+@keyframes glow {
+  0%, 100% {
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+    opacity: 0.3;
+  }
+  50% {
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2));
+    opacity: 0.6;
+  }
+}
+
+@keyframes colorShift {
+  0% {
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.1), rgba(6, 182, 212, 0.2));
+  }
+  33% {
+    background: linear-gradient(45deg, rgba(147, 51, 234, 0.2), rgba(6, 182, 212, 0.1), rgba(236, 72, 153, 0.2));
+  }
+  66% {
+    background: linear-gradient(45deg, rgba(6, 182, 212, 0.2), rgba(236, 72, 153, 0.1), rgba(59, 130, 246, 0.2));
+  }
+  100% {
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.1), rgba(6, 182, 212, 0.2));
+  }
+}
+
+.banner-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.banner-shimmer {
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+.banner-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.banner-color-shift {
+  animation: colorShift 6s ease-in-out infinite;
+}
+
+/* Animaciones personalizadas */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Estilo para el contenedor de modales */
+#modal-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+#modal-root > div {
+  pointer-events: auto;
+}
+
+@layer utilities {
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-modalFadeIn {
+    animation: modalFadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+}
+
+@layer base {
+  html {
+    font-family: "Inter var", system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-100 text-secondary-700 hover:bg-secondary-200 focus:ring-secondary-500;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-md overflow-hidden;
+  }
+
+  .form-input {
+    @apply w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  /* Estilos para la barra lateral */
+  .sidebar {
+    @apply bg-[#121940] text-[#a4b1cd] h-screen flex flex-col overflow-hidden transition-all duration-500 ease-in-out;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .sidebar:hover {
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .sidebar.collapsed .sidebar-header h1,
+  .sidebar.collapsed .sidebar-section h2,
+  .sidebar.collapsed .menu-list a span,
+  .sidebar.collapsed .logout-btn span,
+  .sidebar.collapsed .star {
+    @apply hidden;
+  }
+
+  .sidebar.collapsed .menu-list a i,
+  .sidebar.collapsed .logout-btn i {
+    @apply mr-0;
+  }
+
+  .sidebar-header {
+    @apply p-5 flex justify-between items-center border-b border-white border-opacity-10;
+    background: linear-gradient(135deg, rgba(255, 218, 10, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+  }
+
+  .sidebar-header h1 {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .sidebar-header h1:hover {
+    @apply transform scale-105;
+    text-shadow: 0 0 10px rgba(255, 218, 10, 0.3);
+  }
+
+  .sidebar-section {
+    @apply py-4 border-b border-white border-opacity-5;
+  }
+
+  .sidebar-section h2 {
+    @apply uppercase text-xs px-5 mb-2 tracking-wider transition-all duration-200;
+  }
+
+  .menu-list {
+    @apply list-none;
+  }
+
+  .menu-list li {
+    @apply flex items-center justify-between p-3 px-5 transition-all duration-300 ease-in-out;
+    position: relative;
+  }
+
+  .menu-list li:hover {
+    @apply bg-white bg-opacity-10 transform translate-x-1;
+  }
+
+  .menu-list li.active {
+    @apply bg-[#f59e0b] bg-opacity-20 border-l-4 border-[#f59e0b];
+    box-shadow: inset 0 0 10px rgba(245, 158, 11, 0.2);
+  }
+
+  .menu-list li.active a {
+    @apply text-white;
+  }
+
+  .menu-list li.active i {
+    @apply text-[#f59e0b];
+  }
+
+  .menu-list a {
+    @apply flex items-center text-[#a4b1cd] no-underline flex-grow transition-colors duration-200;
+  }
+
+  .menu-list a:hover {
+    @apply text-white;
+  }
+
+  .menu-list a i {
+    @apply mr-3 text-base w-5 text-center transition-all duration-200;
+  }
+
+  .star {
+    @apply cursor-pointer text-[#a4b1cd] transition-all duration-200;
+  }
+
+  .star:hover {
+    @apply text-[#ffda0a] transform scale-110;
+  }
+
+  .star.active {
+    @apply text-[#ffda0a];
+  }
+
+  .sidebar-footer {
+    @apply mt-auto p-5 border-t border-white border-opacity-10;
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%);
+  }
+
+  .logout-btn {
+    @apply flex items-center text-red-400 no-underline transition-all duration-300 ease-in-out;
+  }
+
+  .logout-btn:hover {
+    @apply text-red-300 transform scale-105;
+  }
+
+  .logout-btn i {
+    @apply mr-3 transition-transform duration-200;
+  }
+
+  .logout-btn:hover i {
+    @apply transform scale-110;
+  }
+
+  /* Animaciones adicionales para la barra lateral */
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .sidebar-animate {
+    animation: slideInLeft 0.5s ease-out;
+  }
+
+  .sidebar-pulse {
+    animation: pulse 2s infinite;
+  }
+
+  /* Transiciones de página */
+  .page-transition {
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  .page-transition.fadeIn {
+    opacity: 1;
+  }
+
+  .page-transition.fadeOut {
+    opacity: 0;
+  }
+}
+
+/* Estilos específicos para los tests BAT-7 */
+.test-container {
+  @apply max-w-5xl mx-auto p-4;
+}
+
+.test-header {
+  @apply mb-6 p-4 bg-white rounded-lg shadow-md;
+}
+
+.test-content {
+  @apply bg-white rounded-lg shadow-md p-6 mb-6;
+}
+
+.test-footer {
+  @apply bg-white rounded-lg shadow-md p-4;
+}
+
+.test-timer {
+  @apply text-xl font-mono bg-blue-100 px-4 py-2 rounded-lg;
+}
+
+.test-timer-warning {
+  @apply animate-pulse bg-red-100 text-red-600;
+}

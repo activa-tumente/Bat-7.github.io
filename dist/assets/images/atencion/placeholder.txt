@@ -1,0 +1,7 @@
+Este archivo es un marcador de posición para el directorio de imágenes de atención.
+
+Las imágenes necesarias para el test de atención son:
+1. Atencion.png - Imagen que muestra los ejemplos A1, A2 y A3
+2. A1.png, A2.png, ..., A20.png - Imágenes para las preguntas del test
+
+Estas imágenes deben ser proporcionadas por el usuario y colocadas en este directorio.
