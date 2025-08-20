@@ -1,0 +1,65 @@
+/* Estilos para las tarjetas de pacientes */
+
+.patient-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.patient-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.patient-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: white;
+}
+
+.patient-avatar-male {
+  background-color: #3b82f6;
+}
+
+.patient-avatar-female {
+  background-color: #ec4899;
+}
+
+.patient-avatar-other {
+  background-color: #6b7280;
+}
+
+.patient-name {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #2563eb;
+  margin-bottom: 0.25rem;
+}
+
+.patient-education {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.patient-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.patient-info-label {
+  color: #6b7280;
+  margin-right: 0.25rem;
+}
+
+.patient-psychologist {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}

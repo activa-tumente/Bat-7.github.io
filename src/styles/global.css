@@ -1,0 +1,478 @@
+/* Estilos globales para la aplicación */
+
+/* Variables de tema claro (por defecto) */
+:root {
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+  --color-background: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-text: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Variables de tema oscuro */
+.dark-mode {
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+  --color-background: #111827;
+  --color-surface: #1f2937;
+  --color-text: #f9fafb;
+  --color-text-secondary: #d1d5db;
+  --color-border: #374151;
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Aplicar variables al modo oscuro */
+.dark-mode body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+/* Estilos base */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Ajustes de accesibilidad */
+.high-contrast {
+  --color-text: #000000;
+  --color-background: #ffffff;
+  --color-text-secondary: #444444;
+  --color-border: #000000;
+}
+
+.dark-mode.high-contrast {
+  --color-text: #ffffff;
+  --color-background: #000000;
+  --color-text-secondary: #cccccc;
+  --color-border: #ffffff;
+}
+
+/* Tamaños de fuente */
+.font-small {
+  font-size: 0.875rem;
+}
+
+.font-medium {
+  font-size: 1rem;
+}
+
+.font-large {
+  font-size: 1.125rem;
+}
+
+/* Vista compacta */
+.compact-view .p-4 {
+  padding: 0.75rem !important;
+}
+
+.compact-view .p-6 {
+  padding: 1rem !important;
+}
+
+.compact-view .my-4 {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.compact-view .my-6 {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.compact-view .space-y-4 > * + * {
+  margin-top: 0.5rem !important;
+}
+
+.compact-view .space-y-6 > * + * {
+  margin-top: 0.75rem !important;
+}
+
+/* Estilos para Toggle Switch */
+.slider {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  width: 2.75rem;
+  border-radius: 9999px;
+  transition: background-color 0.3s ease;
+}
+
+.toggle {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background-color: white;
+  transform: translateX(0.25rem);
+  transition: transform 0.3s ease;
+}
+
+/* Animaciones */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease;
+}
+
+/* Modal personalizado */
+#modal-root {
+  position: relative;
+  z-index: 50;
+}
+
+/* Utilidades adicionales */
+.text-ellipsis {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Clases para estados de datos */
+.data-status-dot {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.status-real {
+  background-color: #10b981;
+}
+
+.status-cache {
+  background-color: #f59e0b;
+}
+
+.status-mock {
+  background-color: #6b7280;
+}
+
+.status-error {
+  background-color: #ef4444;
+}
+
+/* Estilos para impresión */
+@media print {
+  /* Ocultar sidebar y elementos de navegación */
+  .sidebar,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ajustar el contenido principal para ocupar toda la página */
+  .flex-1 {
+    margin-left: 0 !important;
+  }
+
+  /* Asegurar que el contenido se vea bien en impresión */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Optimizar gráficos para impresión */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Evitar saltos de página en elementos importantes */
+  .print-keep-together {
+    page-break-inside: avoid;
+  }
+
+  /* Ajustar márgenes para impresión */
+  .container {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  /* Ocultar botones de acción en impresión */
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Optimizar grid para impresión - forzar layout horizontal */
+  .print-grid-horizontal {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  /* Reducir espaciado en impresión */
+  .print-compact .mb-6 {
+    margin-bottom: 1rem !important;
+  }
+
+  .print-compact .p-4 {
+    padding: 0.75rem !important;
+  }
+
+  .print-compact .gap-6 {
+    gap: 0.75rem !important;
+  }
+
+  /* Optimizar espaciado general para PDF */
+  @page {
+    margin: 0.5in;
+    size: A4;
+  }
+
+  /* Eliminar márgenes excesivos en PDF */
+  .print-optimize {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-optimize .container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0.25rem !important;
+  }
+
+  /* Optimizar cards para PDF */
+  .print-optimize .mb-6 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .print-optimize .py-6 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .print-optimize .space-y-6 > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  /* Optimizar header del informe para PDF */
+  .print-optimize .text-center {
+    margin-bottom: 0.25rem !important;
+  }
+
+  /* Compactar información del paciente en PDF */
+  .print-optimize .grid.md\\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+
+  .print-optimize .space-y-4 > * + * {
+    margin-top: 0.25rem !important;
+  }
+
+  .print-optimize .p-4 {
+    padding: 0.5rem !important;
+  }
+
+  .print-optimize .mb-1 {
+    margin-bottom: 0.125rem !important;
+  }
+
+  .print-optimize .text-lg {
+    font-size: 1rem !important;
+  }
+
+  .print-optimize .text-base {
+    font-size: 0.875rem !important;
+  }
+
+  .print-optimize .text-sm {
+    font-size: 0.75rem !important;
+  }
+
+  /* Eliminar sombras y efectos en PDF */
+  .print-optimize .shadow-lg {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Optimizar gradientes para PDF */
+  .print-optimize .bg-gradient-to-r {
+    background: #f8fafc !important;
+  }
+
+  /* Compactar secciones de interpretación */
+  .print-optimize .border-l-4 {
+    padding-left: 1rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .print-optimize .w-12.h-12 {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+
+  .print-optimize .mr-4 {
+    margin-right: 0.5rem !important;
+  }
+
+  /* Eliminar espacios grandes entre secciones */
+  .print-optimize .space-y-6 > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  /* Forzar continuidad en interpretaciones */
+  .print-optimize .print-keep-together {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Eliminar espacios grandes entre secciones de interpretación */
+  .print-optimize .space-y-6 {
+    display: block !important;
+  }
+
+  .print-optimize .space-y-6 > * {
+    margin-top: 0 !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .print-optimize .space-y-6 > *:first-child {
+    margin-top: 0 !important;
+  }
+
+  .print-optimize .space-y-6 > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Compactar headers de cards */
+  .print-optimize .CardHeader {
+    padding: 0.5rem 1rem !important;
+  }
+
+  .print-optimize .CardBody {
+    padding: 0.75rem 1rem !important;
+  }
+
+  /* Eliminar márgenes de títulos en PDF */
+  .print-optimize h2 {
+    margin-bottom: 0.25rem !important;
+  }
+
+  .print-optimize h3 {
+    margin-bottom: 0.25rem !important;
+  }
+
+  .print-optimize h4 {
+    margin-bottom: 0.125rem !important;
+  }
+
+  /* Compactar listas */
+  .print-optimize ul {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .print-optimize li {
+    margin-bottom: 0.125rem !important;
+  }
+
+  /* Eliminar padding excesivo en divs */
+  .print-optimize .py-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .print-optimize .py-6 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Forzar que las interpretaciones sean continuas */
+  .print-optimize .border-l-4.pl-6 {
+    margin-bottom: 0.5rem !important;
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+}
+
+/* Estilos para el acordeón de resultados */
+.accordion-card {
+  transition: all 0.3s ease-in-out;
+}
+
+.accordion-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.accordion-header {
+  transition: all 0.2s ease-in-out;
+}
+
+.accordion-header:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.accordion-content {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chevron-icon {
+  transition: transform 0.2s ease-in-out;
+}
+
+.chevron-expanded {
+  transform: rotate(90deg);
+}
+
+/* Animación suave para el contenido colapsable */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.slide-down {
+  animation: slideDown 0.3s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}

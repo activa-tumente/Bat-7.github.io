@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corrector de Modales de Administración</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f7f9fc;
+      color: #333;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    h1 {
+      color: #2563eb;
+      font-size: 1.8rem;
+      margin-top: 0;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    h2 {
+      color: #4b5563;
+      font-size: 1.3rem;
+      margin-top: 25px;
+      margin-bottom: 15px;
+    }
+    
+    .card {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .card h3 {
+      color: #374151;
+      font-size: 1.1rem;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    
+    .console {
+      background-color: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      overflow-x: auto;
+      height: 300px;
+      overflow-y: scroll;
+    }
+    
+    .log {
+      margin: 5px 0;
+      line-height: 1.4;
+    }
+    
+    .error {
+      color: #f87171;
+    }
+    
+    .warning {
+      color: #fbbf24;
+    }
+    
+    .success {
+      color: #34d399;
+    }
+    
+    .info {
+      color: #60a5fa;
+    }
+    
+    .button-container {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+    
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    
+    button.secondary {
+      background-color: #6b7280;
+    }
+    
+    button.secondary:hover {
+      background-color: #4b5563;
+    }
+    
+    button.success {
+      background-color: #10b981;
+    }
+    
+    button.success:hover {
+      background-color: #059669;
+    }
+    
+    button.warning {
+      background-color: #f59e0b;
+    }
+    
+    button.warning:hover {
+      background-color: #d97706;
+    }
+    
+    button.error {
+      background-color: #ef4444;
+    }
+    
+    button.error:hover {
+      background-color: #dc2626;
+    }
+    
+    button:disabled {
+      background-color: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    button svg {
+      margin-right: 8px;
+    }
+    
+    input, select {
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #4b5563;
+    }
+    
+    .instructions {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      border-radius: 6px;
+    }
+    
+    .instructions h3 {
+      margin-top: 0;
+      color: #1e40af;
+    }
+    
+    .instructions ol {
+      margin-bottom: 0;
+      padding-left: 20px;
+    }
+    
+    .instructions li {
+      margin-bottom: 5px;
+    }
+    
+    .notification {
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+    }
+    
+    .notification svg {
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+    
+    .notification.error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    
+    .notification.success {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    
+    .notification.warning {
+      background-color: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fef3c7;
+    }
+    
+    .notification.info {
+      background-color: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #dbeafe;
+    }
+    
+    .step {
+      margin-bottom: 30px;
+    }
+    
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background-color: #2563eb;
+      color: white;
+      border-radius: 50%;
+      margin-right: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .step h3 {
+      display: inline;
+      vertical-align: middle;
+    }
+    
+    .step-content {
+      margin-left: 38px;
+      margin-top: 10px;
+    }
+    
+    .step-content p {
+      margin-top: 0;
+    }
+    
+    @media (max-width: 640px) {
+      .container {
+        padding: 20px;
+      }
+      
+      .button-container {
+        flex-direction: column;
+      }
+      
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Corrector de Modales de Administración</h1>
+    
+    <div id="notification" style="display: none;" class="notification info">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12" y2="8"></line>
+      </svg>
+      <span id="notification-message">Mensaje de notificación</span>
+    </div>
+    
+    <div class="step">
+      <span class="step-number">1</span>
+      <h3>Diagnóstico del problema</h3>
+      <div class="step-content">
+        <p>Ejecuta el diagnóstico para verificar si los modales están funcionando correctamente.</p>
+        <div class="button-container">
+          <button id="diagnose-button" onclick="runDiagnosis()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
+              <line x1="16" y1="8" x2="2" y2="22"></line>
+              <line x1="17.5" y1="15" x2="9" y2="15"></line>
+            </svg>
+            Ejecutar diagnóstico
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="step">
+      <span class="step-number">2</span>
+      <h3>Aplicar correcciones</h3>
+      <div class="step-content">
+        <p>Aplica las correcciones necesarias para resolver los problemas detectados.</p>
+        <div class="button-container">
+          <button id="fix-modal-button" onclick="fixModalIssues()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+            Arreglar problemas de modales
+          </button>
+          <button id="replace-modal-button" onclick="replaceModalComponent()" class="warning">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="14 2 18 6 7 17 3 17 3 13 14 2"></polygon>
+              <line x1="3" y1="22" x2="21" y2="22"></line>
+            </svg>
+            Reemplazar componente Modal
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="step">
+      <span class="step-number">3</span>
+      <h3>Verificar conexión a Supabase</h3>
+      <div class="step-content">
+        <p>Verifica y corrige la conexión a Supabase para asegurar que las operaciones CRUD funcionen correctamente.</p>
+        <div class="button-container">
+          <button id="test-db-button" onclick="testConnection()" class="secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            Probar conexión a Supabase
+          </button>
+          <button id="fix-tables-button" onclick="fixTables()" class="success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"></path>
+              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+            </svg>
+            Corregir tablas de Supabase
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="step">
+      <span class="step-number">4</span>
+      <h3>Probar funcionalidad</h3>
+      <div class="step-content">
+        <p>Prueba la funcionalidad de modales en diferentes pestañas.</p>
+        <div class="card">
+          <h3>Selecciona la pestaña a probar</h3>
+          <select id="tab-select">
+            <option value="instituciones">Instituciones</option>
+            <option value="psicologos">Psicólogos</option>
+            <option value="pacientes">Pacientes</option>
+          </select>
+          <button id="test-modal-button" onclick="testModal()" class="success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 11 12 14 22 4"></polyline>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+            Probar modal
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Consola de resultados</h3>
+      <div id="console" class="console"></div>
+    </div>
+    
+    <div class="instructions">
+      <h3>Instrucciones para resolver problemas con modales en administración</h3>
+      <ol>
+        <li>Ejecuta el diagnóstico para identificar problemas en el panel de administración.</li>
+        <li>Aplica la corrección de modales si el diagnóstico indica problemas con ReactDOM o el elemento modal-root.</li>
+        <li>Verifica la conexión a Supabase para asegurar que las operaciones CRUD funcionan correctamente.</li>
+        <li>Si es necesario, aplica las correcciones a las tablas de Supabase.</li>
+        <li>Prueba la funcionalidad abriendo modales en diferentes pestañas.</li>
+        <li>Si los problemas persisten, contacta al soporte técnico con los logs de esta herramienta.</li>
+      </ol>
+    </div>
+  </div>
+  
+  <script>
+    // Elementos del DOM
+    const consoleElement = document.getElementById('console');
+    const notificationElement = document.getElementById('notification');
+    const notificationMessageElement = document.getElementById('notification-message');
+    
+    // Función para mostrar notificación
+    function showNotification(message, type = 'info') {
+      notificationElement.className = `notification ${type}`;
+      notificationMessageElement.textContent = message;
+      notificationElement.style.display = 'flex';
+      
+      // Ocultar después de 5 segundos
+      setTimeout(() => {
+        notificationElement.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Función para agregar mensaje a la consola
+    function addToConsole(message, type = 'log') {
+      const logElement = document.createElement('div');
+      logElement.className = `log ${type}`;
+      logElement.textContent = message;
+      consoleElement.appendChild(logElement);
+      consoleElement.scrollTop = consoleElement.scrollHeight;
+    }
+    
+    // Sobrescribir console.log para mostrar en nuestra consola
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    
+    console.log = function(...args) {
+      originalConsoleLog.apply(console, args);
+      addToConsole(args.join(' '), 'log');
+    };
+    
+    console.error = function(...args) {
+      originalConsoleError.apply(console, args);
+      addToConsole(args.join(' '), 'error');
+    };
+    
+    console.warn = function(...args) {
+      originalConsoleWarn.apply(console, args);
+      addToConsole(args.join(' '), 'warning');
+    };
+    
+    // Función para ejecutar diagnóstico
+    function runDiagnosis() {
+      addToConsole('Ejecutando diagnóstico de modales...', 'info');
+      
+      try {
+        // Verificar si existe el elemento modal-root
+        const modalRoot = document.getElementById('modal-root');
+        addToConsole(`Modal root existente: ${!!modalRoot}`);
+        
+        if (!modalRoot) {
+          addToConsole('Creando elemento modal-root...', 'info');
+          const newModalRoot = document.createElement('div');
+          newModalRoot.setAttribute('id', 'modal-root');
+          document.body.appendChild(newModalRoot);
+          addToConsole('Elemento modal-root creado.', 'success');
+        }
+        
+        // Verificar si ReactDOM está disponible
+        addToConsole(`ReactDOM disponible: ${typeof ReactDOM !== 'undefined'}`);
+        
+        // Verificar versiones de React y ReactDOM
+        if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+          addToConsole(`Versión de React: ${React.version}`, 'info');
+          addToConsole(`Versión de ReactDOM: ${ReactDOM.version}`, 'info');
+          
+          if (React.version !== ReactDOM.version) {
+            addToConsole('⚠️ Las versiones de React y ReactDOM no coinciden. Esto puede causar problemas.', 'warning');
+          }
+        }
+        
+        showNotification('Diagnóstico completado', 'success');
+      } catch (error) {
+        addToConsole(`Error en diagnóstico: ${error.message}`, 'error');
+        showNotification('Error en diagnóstico', 'error');
+      }
+    }
+    
+    // Función para aplicar correcciones de modales
+    function fixModalIssues() {
+      addToConsole('Aplicando correcciones a modales...', 'info');
+      
+      try {
+        // 1. Asegurar que existe el elemento modal-root
+        if (!document.getElementById('modal-root')) {
+          const modalRoot = document.createElement('div');
+          modalRoot.setAttribute('id', 'modal-root');
+          document.body.appendChild(modalRoot);
+          addToConsole('Elemento modal-root creado.', 'success');
+        } else {
+          addToConsole('Elemento modal-root ya existe.', 'info');
+        }
+        
+        // 2. Intentar obtener ReactDOM si no está disponible
+        if (typeof ReactDOM === 'undefined' && typeof React !== 'undefined') {
+          window.ReactDOM = React;
+          addToConsole('Asignado React a ReactDOM como solución temporal.', 'warning');
+        }
+        
+        // 3. Forzar actualización de la UI
+        addToConsole('Forzando actualización de la UI...', 'info');
+        window.dispatchEvent(new Event('resize'));
+        
+        showNotification('Correcciones aplicadas. Intenta usar los modales ahora.', 'success');
+      } catch (error) {
+        addToConsole(`Error al aplicar correcciones: ${error.message}`, 'error');
+        showNotification('Error al aplicar correcciones', 'error');
+      }
+    }
+    
+    // Función para reemplazar el componente Modal
+    function replaceModalComponent() {
+      addToConsole('Esta operación debe realizarse manualmente.', 'warning');
+      addToConsole('Sigue estos pasos:', 'info');
+      addToConsole('1. Copia el archivo Modal.fix.jsx a Modal.jsx', 'info');
+      addToConsole('2. Reinicia la aplicación', 'info');
+      addToConsole('3. Verifica que los modales funcionen correctamente', 'info');
+      
+      showNotification('Consulta las instrucciones en la consola', 'warning');
+    }
+    
+    // Función para probar conexión a Supabase
+    function testConnection() {
+      addToConsole('Probando conexión a Supabase...', 'info');
+      addToConsole('Esta funcionalidad debe implementarse en la aplicación principal.', 'warning');
+      
+      showNotification('Prueba la conexión desde la aplicación principal', 'info');
+    }
+    
+    // Función para corregir tablas en Supabase
+    function fixTables() {
+      addToConsole('Corrigiendo tablas en Supabase...', 'info');
+      addToConsole('Esta funcionalidad debe implementarse en la aplicación principal.', 'warning');
+      
+      showNotification('Ejecuta el script SQL de sincronización en Supabase', 'info');
+    }
+    
+    // Función para probar modales
+    function testModal() {
+      const tabSelect = document.getElementById('tab-select');
+      const selectedTab = tabSelect.value;
+      
+      addToConsole(`Probando modal en pestaña "${selectedTab}"...`, 'info');
+      
+      if (typeof window.modalUtils !== 'undefined' && typeof window.modalUtils.tryOpenModal === 'function') {
+        window.modalUtils.tryOpenModal(selectedTab);
+        addToConsole('Verificando apertura del modal...', 'info');
+      } else {
+        addToConsole('Utilidad modalUtils no disponible. Carga el script modals-fix.js primero.', 'error');
+        showNotification('Carga el script modals-fix.js primero', 'error');
+      }
+    }
+    
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+      addToConsole('Herramienta de corrección de modales iniciada', 'info');
+      addToConsole('Versión: 1.0.0', 'info');
+      addToConsole('Fecha: 2 de mayo de 2025', 'info');
+      addToConsole('-'.repeat(50), 'info');
+      addToConsole('Listo para ejecutar diagnóstico.', 'info');
+    });
+  </script>
+</body>
+</html>

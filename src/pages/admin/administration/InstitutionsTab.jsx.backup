@@ -1,0 +1,464 @@
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+// import { supabase } from '../../../api/supabaseClient'; // No longer needed directly here
+import { useAuth } from '../../../context/AuthContext';
+import { Button } from '../../../components/ui/Button';
+import { Modal } from '../../../components/ui/Modal';
+import { toast } from 'react-toastify';
+// import { initSupabaseAutomation } from '../../../utils/supabaseAutomation'; // Remove automation
+import supabaseService from '../../../services/supabaseService'; // Import the consolidated service
+
+const InstitutionsTab = () => {
+  const { user, isAdmin } = useAuth();
+  const [institutions, setInstitutions] = useState([]);
+  const [loading, setLoading] = useState(false); // Start with false, set true during fetch
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentInstitution, setCurrentInstitution] = useState(null);
+  const [formData, setFormData] = useState({ nombre: '', direccion: '', telefono: '' });
+  const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // --- REMOVE DEBUGGING and forceAdmin ---
+  // console.log('[InstitutionsTab] Rendering. User from context:', user);
+  // console.log('[InstitutionsTab] Rendering. isAdmin from context:', isAdmin);
+  // const forceAdmin = true; // Remove this override
+
+  // Función para obtener instituciones usando el servicio
+  const fetchInstitutions = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Usar la función del servicio consolidado
+      const { data, error } = await supabaseService.getInstitutions(sortField, sortDirection);
+
+      if (error) {
+        // El servicio ya maneja el fallback a datos locales si hay error de conexión
+        // Solo mostramos un toast si el error persiste o es de otro tipo
+        console.error('Error al cargar instituciones (puede ser offline):', error);
+        toast.error('Error al cargar instituciones. Mostrando datos locales si existen.');
+      }
+
+      // Establecer los datos (sean de Supabase o locales del servicio)
+      setInstitutions(data || []);
+
+    } catch (catchError) {
+        // Capturar errores inesperados en la llamada al servicio
+        console.error('Error inesperado en fetchInstitutions:', catchError);
+        toast.error('Ocurrió un error inesperado al cargar las instituciones.');
+        setInstitutions([]); // Asegurar estado limpio en caso de error grave
+    } finally {
+      setLoading(false);
+    }
+  }, [sortField, sortDirection]); // Dependencias para useCallback
+
+  // Cargar instituciones al montar y cuando cambie el orden
+  useEffect(() => {
+    fetchInstitutions();
+  }, [fetchInstitutions]); // fetchInstitutions ya incluye sortField y sortDirection como dependencias
+
+  // --- REMOVE useEffect for supabaseAutomation and event listeners ---
+
+  // Abrir modal para crear/editar institución
+  const openModal = (institution = null) => {
+    setCurrentInstitution(institution);
+    setFormData(institution
+      ? { nombre: institution.nombre, direccion: institution.direccion || '', telefono: institution.telefono || '' }
+      : { nombre: '', direccion: '', telefono: '' }
+    );
+    setErrors({});
+    setIsModalOpen(true);
+  };
+
+  // Cerrar modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Manejar cambios en el formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Limpiar error del campo cuando el usuario escribe
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
+  };
+
+  // Validar formulario
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es obligatorio';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Enviar formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    // --- REMOVE DEBUGGING ---
+    // The debugging try...catch block related to getSession was here and is now removed.
+
+    setLoading(true);
+    try {
+      let result;
+      const institutionData = {
+        nombre: formData.nombre,
+        direccion: formData.direccion,
+        telefono: formData.telefono
+      };
+
+      if (currentInstitution) {
+        // Actualizar usando el servicio
+        result = await supabaseService.updateInstitution(currentInstitution.id, institutionData);
+        if (result.error) throw result.error;
+        toast.success('Institución actualizada correctamente');
+      } else {
+        // Crear usando el servicio
+        result = await supabaseService.createInstitution(institutionData);
+        if (result.error) throw result.error;
+        toast.success('Institución creada correctamente (puede estar pendiente de sincronización)');
+      }
+
+      // Actualizar la lista inmediatamente o esperar sincronización?
+      // Por ahora, recargamos para ver el estado actual (incluyendo pendientes)
+      fetchInstitutions();
+      closeModal();
+
+    } catch (error) {
+      console.error('Error al guardar institución:', error);
+      toast.error(`Error al ${currentInstitution ? 'actualizar' : 'crear'} la institución: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Eliminar institución
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Está seguro que desea eliminar esta institución?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Eliminar usando el servicio
+      const { error } = await supabaseService.deleteInstitution(id);
+
+      if (error) throw error;
+
+      toast.success('Institución eliminada correctamente (puede estar pendiente de sincronización)');
+      // Actualizar la lista para reflejar la eliminación (local u online)
+      fetchInstitutions();
+
+    } catch (error) {
+      console.error('Error al eliminar institución:', error);
+      toast.error(`Error al eliminar la institución: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrar instituciones por término de búsqueda
+  const filteredInstitutions = institutions.filter(institution =>
+    institution.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (institution.direccion && institution.direccion.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (institution.telefono && institution.telefono.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Ordenar instituciones
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredInstitutions.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredInstitutions.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="mb-4 md:mb-0">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar instituciones..."
+              className="form-input pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i className="fas fa-search text-gray-400"></i> {/* Considerar reemplazar con un icono SVG o de librería */}
+            </div>
+          </div>
+        </div>
+        {/* Usar isAdmin directamente, remover forceAdmin */}
+        {isAdmin && (
+          <Button
+            variant="primary"
+            onClick={() => openModal()}
+            className="flex items-center"
+            disabled={loading} // Deshabilitar botón mientras carga
+          >
+            <i className="fas fa-plus mr-2"></i> {/* Icono */}
+            Nueva Institución
+          </Button>
+        )}
+      </div>
+
+      {/* Indicador de carga */}
+      {loading && (
+        <div className="text-center py-4">
+          <i className="fas fa-spinner fa-spin text-primary-500 text-2xl mb-2"></i> {/* Icono */}
+          <p>Cargando instituciones...</p>
+        </div>
+      )}
+
+      {/* Mensaje si no hay datos y no está cargando */}
+      {!loading && filteredInstitutions.length === 0 && (
+        <div className="text-center py-4">
+          <p className="text-gray-500">No se encontraron instituciones</p>
+          {/* Usar isAdmin directamente */}
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              className="mt-2"
+              onClick={() => openModal()} // Permitir agregar si está vacío
+            >
+              Agregar Primera Institución
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Mostrar tabla solo si no está cargando y hay datos */}
+      {!loading && filteredInstitutions.length > 0 && (
+        <>
+          <div className="overflow-x-auto shadow rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100"> {/* Fondo ligeramente diferente */}
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200" // Estilo mejorado
+                    onClick={() => handleSort('nombre')}
+                  >
+                    Nombre
+                    {sortField === 'nombre' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )} {/* Iconos mejorados */}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                    onClick={() => handleSort('direccion')}
+                  >
+                    Dirección
+                    {sortField === 'direccion' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                    onClick={() => handleSort('telefono')}
+                  >
+                    Teléfono
+                    {sortField === 'telefono' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )}
+                  </th>
+                  {/* Usar isAdmin directamente */}
+                  {isAdmin && (
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentItems.map((institution) => (
+                  <tr key={institution.id} className={`hover:bg-gray-50 ${supabaseService.isTemporaryId(institution.id) ? 'opacity-70 italic' : ''}`}> {/* Estilo para items temporales */}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{institution.nombre}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{institution.direccion || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{institution.telefono || '-'}</td>
+                    {/* Usar isAdmin directamente */}
+                    {isAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3"> {/* Espacio entre botones */}
+                        <button
+                          onClick={() => openModal(institution)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Editar" // Tooltip
+                        >
+                          <i className="fas fa-edit"></i> {/* Icono */}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(institution.id)}
+                          className="text-red-600 hover:text-red-900"
+                           title="Eliminar" // Tooltip
+                        >
+                          <i className="fas fa-trash-alt"></i> {/* Icono */}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+           {/* Paginación */}
+           {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+              <div className="flex flex-1 justify-between sm:hidden">
+                {/* Mobile pagination buttons */}
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Mostrando <span className="font-medium">{indexOfFirstItem + 1}</span> a <span className="font-medium">{Math.min(indexOfLastItem, filteredInstitutions.length)}</span> de{' '}
+                    <span className="font-medium">{filteredInstitutions.length}</span> resultados
+                  </p>
+                </div>
+                <div>
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <button
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Anterior</span>
+                      <i className="fas fa-chevron-left h-5 w-5" aria-hidden="true"></i>
+                    </button>
+                    {/* Render page numbers dynamically */}
+                    {[...Array(totalPages).keys()].map(number => (
+                       <button
+                        key={number + 1}
+                        onClick={() => paginate(number + 1)}
+                        aria-current={currentPage === number + 1 ? 'page' : undefined}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                          currentPage === number + 1
+                            ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                        }`}
+                      >
+                        {number + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Siguiente</span>
+                       <i className="fas fa-chevron-right h-5 w-5" aria-hidden="true"></i>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+       {/* Modal para crear/editar institución */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={currentInstitution ? 'Editar Institución' : 'Nueva Institución'}
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre *
+            </label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className={`form-input ${errors.nombre ? 'border-red-500' : ''}`}
+              placeholder="Ej. Universidad Nacional"
+            />
+            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="direccion" className="block text-sm font-medium text-gray-700 mb-1">
+              Dirección
+            </label>
+            <input
+              type="text"
+              id="direccion"
+              name="direccion"
+              value={formData.direccion}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="Ej. Calle 45 #12-34"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">
+              Teléfono
+            </label>
+            <input
+              type="text"
+              id="telefono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="Ej. 601 234 5678"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={closeModal}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  {currentInstitution ? 'Actualizando...' : 'Guardando...'}
+                </>
+              ) : (
+                currentInstitution ? 'Actualizar' : 'Guardar'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};
+
+export default InstitutionsTab;

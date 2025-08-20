@@ -1,0 +1,294 @@
+/* Estilos específicos para el InformeModalProfessional */
+
+.informe-modal-professional {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Estilos para impresión */
+@media print {
+  .informe-modal-professional {
+    position: static !important;
+    background: white !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .informe-modal-professional .bg-gradient-to-r {
+    background: #1e40af !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .informe-modal-professional .bg-gray-50 {
+    background: #f9fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .informe-modal-professional .shadow-2xl,
+  .informe-modal-professional .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  .informe-modal-professional .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  .informe-modal-professional .fixed {
+    position: static !important;
+  }
+
+  .informe-modal-professional .bg-black {
+    display: none !important;
+  }
+
+  /* Ocultar botones de navegación en impresión */
+  .informe-modal-professional nav {
+    display: none !important;
+  }
+
+  /* Mostrar todas las secciones en impresión */
+  .informe-modal-professional .print\:block {
+    display: block !important;
+  }
+
+  /* Ajustar tamaños de fuente para impresión */
+  .informe-modal-professional h1 {
+    font-size: 24px !important;
+  }
+
+  .informe-modal-professional h2 {
+    font-size: 20px !important;
+  }
+
+  .informe-modal-professional h3 {
+    font-size: 16px !important;
+  }
+
+  .informe-modal-professional p,
+  .informe-modal-professional span,
+  .informe-modal-professional td,
+  .informe-modal-professional th {
+    font-size: 12px !important;
+  }
+
+  /* Evitar saltos de página en elementos importantes */
+  .informe-modal-professional .bg-blue-50,
+  .informe-modal-professional .bg-green-50,
+  .informe-modal-professional .bg-orange-50,
+  .informe-modal-professional .bg-purple-50 {
+    page-break-inside: avoid;
+  }
+
+  .informe-modal-professional table {
+    page-break-inside: auto;
+  }
+
+  .informe-modal-professional tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}
+
+/* Animaciones suaves para las transiciones */
+.informe-modal-professional .transition-colors {
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+/* Estilos para los badges de nivel */
+.informe-modal-professional .badge-nivel {
+  font-weight: 600;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Estilos para las métricas */
+.informe-modal-professional .metric-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.informe-modal-professional .metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para la tabla de resultados */
+.informe-modal-professional .results-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.informe-modal-professional .results-table th {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.informe-modal-professional .results-table td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.informe-modal-professional .results-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Estilos para las secciones de interpretación */
+.informe-modal-professional .interpretation-section {
+  border-left: 4px solid;
+  padding: 1.5rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  margin-bottom: 1.5rem;
+}
+
+.informe-modal-professional .interpretation-section.fortalezas {
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.informe-modal-professional .interpretation-section.debilidades {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.informe-modal-professional .interpretation-section.recomendaciones {
+  border-left-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+/* Estilos para los iconos de aptitudes */
+.informe-modal-professional .aptitude-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .informe-modal-professional {
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+
+  .informe-modal-professional .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .informe-modal-professional .grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .informe-modal-professional nav {
+    flex-wrap: wrap;
+  }
+
+  .informe-modal-professional nav button {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+/* Estilos para el scroll personalizado */
+.informe-modal-professional .overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.informe-modal-professional .overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.informe-modal-professional .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.informe-modal-professional .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Estilos para el perfil cognitivo dominante */
+.informe-modal-professional .perfil-dominante {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 9999px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  letter-spacing: 0.025em;
+}
+
+/* Estilos para los separadores de sección */
+.informe-modal-professional .section-divider {
+  width: 6rem;
+  height: 0.25rem;
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  margin: 0 auto;
+  border-radius: 2px;
+}
+
+/* Estilos para las listas de puntos */
+.informe-modal-professional .bullet-point {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-top: 0.5rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* Estilos para el footer */
+.informe-modal-professional .footer {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-top: 1px solid #d1d5db;
+}
+
+/* Estilos para los botones de acción */
+.informe-modal-professional .action-button {
+  transition: all 0.2s ease-in-out;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.informe-modal-professional .action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.informe-modal-professional .action-button.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.informe-modal-professional .action-button.secondary {
+  background: white;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+}
+
+.informe-modal-professional .action-button.danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}

@@ -1,0 +1,5 @@
+/* Estilos simplificados para evitar parpadeo */
+.page-content {
+  opacity: 1;
+  transition: opacity 150ms ease-in-out;
+}

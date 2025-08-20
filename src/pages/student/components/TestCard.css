@@ -1,0 +1,315 @@
+/* Estilos para el contenedor externo */
+.test-card-container {
+  height: 100%;
+  display: flex;
+}
+
+/* Estilos para las tarjetas de test */
+.test-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.3s ease;
+  height: 420px; /* Altura aumentada para mostrar texto completo */
+}
+
+.test-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Estados visuales dinámicos */
+.test-card-completed {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #22c55e;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
+.test-card-completed:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.2);
+}
+
+.test-card-pending {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+}
+
+.test-card-pending:hover {
+  border-color: #d1d5db;
+}
+
+/* Icono de check para tests completados */
+.completion-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 15;
+  color: #22c55e;
+  font-size: 24px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: checkPulse 2s infinite;
+}
+
+@keyframes checkPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Badge de estado */
+.test-card-status-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.status-badge-completed {
+  background-color: #22c55e;
+  color: white;
+  border: 1px solid #16a34a;
+}
+
+.status-badge-pending {
+  background-color: #f97316;
+  color: white;
+  border: 1px solid #ea580c;
+}
+
+/* Badge de nivel */
+.test-card-level-badge {
+  position: absolute;
+  top: 40px;
+  left: 8px;
+  z-index: 10;
+}
+
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.level-badge-green {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.level-badge-blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.level-badge-purple {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+  border: 1px solid #e9d5ff;
+}
+
+.level-badge-gray {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+/* Círculo con abreviatura */
+.abbreviation-circle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* Cabecera de la tarjeta */
+.test-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 18px;
+  margin-top: 45px; /* Espacio aumentado para los badges de estado y nivel */
+  height: 110px; /* Altura aumentada para mejor distribución */
+  justify-content: center;
+}
+
+/* Icono de la tarjeta */
+.test-card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.test-card-icon i {
+  font-size: 26px !important;
+  line-height: 1;
+  vertical-align: middle;
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands";
+  font-weight: 900;
+}
+
+/* Título de la tarjeta */
+.test-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0;
+  padding: 0 10px;
+  line-height: 1.3;
+  max-height: 44px; /* Altura máxima para 2 líneas */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Descripción */
+.test-card-description {
+  height: 95px; /* Altura aumentada para mostrar texto completo */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.test-card-description p {
+  font-size: 13px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 100%;
+  margin: 0;
+  padding-top: 2px;
+  word-spacing: 0.5px;
+  hyphens: auto;
+}
+
+/* Contenedor de información de tiempo y preguntas */
+.test-card-info-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+  height: 85px; /* Altura aumentada para mejor distribución */
+  padding: 0 4px;
+}
+
+/* Información de tiempo y preguntas */
+.test-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 8px 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.info-label {
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 6px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.info-unit {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Contenedor para el botón */
+.test-card-button-container {
+  margin-top: auto;
+  height: 50px; /* Altura aumentada para el contenedor del botón */
+  padding: 0 4px;
+}
+
+/* Botón de iniciar test */
+.test-card-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 16px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  height: 100%;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+  cursor: pointer;
+}
+
+.test-card-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.test-card-button i {
+  margin-right: 8px;
+  font-size: 14px;
+}

@@ -1,0 +1,791 @@
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+// import { supabase } from '../../../api/supabaseClient'; // Remove direct supabase import
+import supabaseService from '../../../services/supabaseService'; // Import the service
+import { Button } from '../../../components/ui/Button';
+import { Modal } from '../../../components/ui/Modal';
+import { toast } from 'react-toastify';
+
+const PatientsTab = ({ isAdmin }) => {
+  const [patients, setPatients] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
+  const [loading, setLoading] = useState(false); // Initialize loading to false
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPatient, setCurrentPatient] = useState(null);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    fecha_nacimiento: '',
+    genero: '',
+    institucion_id: '',
+    psicologo_id: '',
+    notas: ''
+  });
+  const [psychologists, setPsychologists] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [filters, setFilters] = useState({
+    institucion_id: '',
+    genero: '',
+    psicologo_id: '',
+    edad_min: '',
+    edad_max: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // Fetch data using useCallback and the service
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Fetch all data concurrently
+      const [patientsResult, institutionsResult, psychologistsResult] = await Promise.all([
+        supabaseService.getPatients(sortField, sortDirection), // Assuming getPatients exists in service
+        supabaseService.getInstitutions(),
+        supabaseService.getPsychologists() // Assuming getPsychologists exists in service
+      ]);
+
+      if (patientsResult.error) {
+        console.error('Error al cargar pacientes:', patientsResult.error);
+        toast.error('Error al cargar pacientes. Mostrando datos locales si existen.');
+      }
+      setPatients(patientsResult.data || []);
+
+      if (institutionsResult.error) {
+        console.error('Error al cargar instituciones:', institutionsResult.error);
+        toast.error('Error al cargar instituciones. Mostrando datos locales si existen.');
+      }
+      setInstitutions(institutionsResult.data || []);
+
+      if (psychologistsResult.error) {
+        console.error('Error al cargar psicólogos:', psychologistsResult.error);
+        toast.error('Error al cargar psicólogos. Mostrando datos locales si existen.');
+      }
+      setPsychologists(psychologistsResult.data || []);
+
+    } catch (error) {
+      console.error('Error inesperado al cargar datos:', error);
+      toast.error('Ocurrió un error inesperado al cargar los datos.');
+      setPatients([]);
+      setInstitutions([]);
+      setPsychologists([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [sortField, sortDirection]); // Dependencies for fetching
+
+  // Cargar datos al montar y cuando cambie el orden
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Calcular edad a partir de la fecha de nacimiento
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return null;
+
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+
+    return age;
+  };
+
+  // Abrir modal para crear/editar paciente
+  const openModal = (patient = null) => {
+    if (patient) {
+      setCurrentPatient(patient);
+      setFormData({
+        nombre: patient.nombre,
+        fecha_nacimiento: patient.fecha_nacimiento,
+        genero: patient.genero,
+        institucion_id: patient.institucion_id,
+        psicologo_id: patient.psicologo_id || '',
+        notas: patient.notas || ''
+      });
+    } else {
+      setCurrentPatient(null);
+      setFormData({
+        nombre: '',
+        fecha_nacimiento: '',
+        genero: '',
+        institucion_id: institutions.length > 0 ? institutions[0].id : '',
+        psicologo_id: '',
+        notas: ''
+      });
+    }
+    setErrors({});
+    setIsModalOpen(true);
+  };
+
+  // Cerrar modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Manejar cambios en el formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Limpiar error del campo cuando el usuario escribe
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
+  };
+
+  // Validar formulario
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es obligatorio';
+    }
+
+    if (!formData.fecha_nacimiento) {
+      newErrors.fecha_nacimiento = 'La fecha de nacimiento es obligatoria';
+    }
+
+    if (!formData.genero) {
+      newErrors.genero = 'El género es obligatorio';
+    }
+
+    if (!formData.institucion_id) {
+      newErrors.institucion_id = 'La institución es obligatoria';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Manejar envío del formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Calcular edad (mantener en el componente por ahora)
+      const edad = calculateAge(formData.fecha_nacimiento);
+
+      // Preparar datos para el servicio
+      const patientData = {
+        nombre: formData.nombre,
+        fecha_nacimiento: formData.fecha_nacimiento,
+        genero: formData.genero,
+        institucion_id: formData.institucion_id,
+        psicologo_id: formData.psicologo_id || null, // Asegurar null si está vacío
+        notas: formData.notas,
+        edad: edad,
+        // fecha_creacion: new Date().toISOString().split('T')[0] // El servicio debería manejar timestamps
+      };
+
+      let result;
+      if (currentPatient) {
+        // Actualizar usando el servicio
+        result = await supabaseService.updatePatient(currentPatient.id, patientData);
+        if (result.error) throw result.error;
+        toast.success(`Paciente "${formData.nombre}" actualizado correctamente`);
+      } else {
+        // Crear usando el servicio
+        result = await supabaseService.createPatient(patientData);
+        if (result.error) throw result.error;
+        toast.success(`Paciente "${formData.nombre}" creado correctamente (puede estar pendiente de sincronización)`);
+      }
+
+      // Cerrar modal y recargar lista
+      closeModal();
+      fetchData(); // Usar la función de carga consolidada
+
+    } catch (error) {
+      console.error('Error al guardar paciente:', error);
+      toast.error(`Error al guardar el paciente: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Manejar eliminación de paciente
+  const handleDelete = async (id, patientName) => {
+    // Mostrar confirmación con el nombre del paciente
+    if (!window.confirm(`¿Está seguro de eliminar al paciente "${patientName}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setLoading(true); // Moved setLoading after the confirmation check
+    try {
+      // Eliminar usando el servicio
+      const { error } = await supabaseService.deletePatient(id);
+
+      if (error) throw error;
+
+      toast.success(`Paciente "${patientName}" eliminado correctamente (puede estar pendiente de sincronización)`);
+      fetchData(); // Usar la función de carga consolidada
+
+    } catch (error) {
+      console.error('Error al eliminar paciente:', error);
+      toast.error(`Error al eliminar el paciente: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Manejar cambio de ordenamiento
+  const handleSort = (field) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Manejar cambios en los filtros
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setCurrentPage(1); // Resetear a la primera página cuando se cambian los filtros
+  };
+
+  // Limpiar todos los filtros
+  const clearFilters = () => {
+    setFilters({
+      institucion_id: '',
+      genero: '',
+      psicologo_id: '',
+      edad_min: '',
+      edad_max: ''
+    });
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  // Filtrar pacientes por término de búsqueda y filtros avanzados
+  const filteredPatients = patients.filter(patient => {
+    // Filtro por término de búsqueda
+    const matchesSearch =
+      patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.notas && patient.notas.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Filtro por institución
+    const matchesInstitution =
+      !filters.institucion_id || patient.institucion_id === filters.institucion_id;
+
+    // Filtro por género
+    const matchesGender =
+      !filters.genero || patient.genero === filters.genero;
+
+    // Filtro por psicólogo
+    const matchesPsychologist =
+      !filters.psicologo_id || patient.psicologo_id === filters.psicologo_id;
+
+    // Filtro por edad mínima
+    const matchesMinAge =
+      !filters.edad_min || (patient.edad && patient.edad >= parseInt(filters.edad_min));
+
+    // Filtro por edad máxima
+    const matchesMaxAge =
+      !filters.edad_max || (patient.edad && patient.edad <= parseInt(filters.edad_max));
+
+    // Debe cumplir con todos los filtros
+    return matchesSearch && matchesInstitution && matchesGender &&
+           matchesPsychologist && matchesMinAge && matchesMaxAge;
+  });
+
+  // Calcular paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+
+  // Cambiar página
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  return (
+    <div>
+      <div className="mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+          <div className="mb-4 md:mb-0 flex-grow">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar pacientes..."
+                className="form-input pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i className="fas fa-search text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center"
+            >
+              <i className={`fas fa-filter mr-2 ${showFilters ? 'text-blue-500' : ''}`}></i>
+              {showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros'}
+            </Button>
+            {isAdmin && (
+              <Button
+                variant="primary"
+                onClick={() => openModal()}
+                className="flex items-center"
+                disabled={loading}
+              >
+                <i className="fas fa-plus mr-2"></i>
+                Nuevo Paciente
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <h3 className="text-lg font-medium mb-3">Filtros Avanzados</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="filter-institucion" className="block text-sm font-medium text-gray-700 mb-1">
+                  Institución
+                </label>
+                <select
+                  id="filter-institucion"
+                  name="institucion_id"
+                  value={filters.institucion_id}
+                  onChange={handleFilterChange}
+                  className="form-select"
+                >
+                  <option value="">Todas las instituciones</option>
+                  {institutions.map(institution => (
+                    <option key={institution.id} value={institution.id}>
+                      {institution.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="filter-genero" className="block text-sm font-medium text-gray-700 mb-1">
+                  Género
+                </label>
+                <select
+                  id="filter-genero"
+                  name="genero"
+                  value={filters.genero}
+                  onChange={handleFilterChange}
+                  className="form-select"
+                >
+                  <option value="">Todos los géneros</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="filter-psicologo" className="block text-sm font-medium text-gray-700 mb-1">
+                  Psicólogo
+                </label>
+                <select
+                  id="filter-psicologo"
+                  name="psicologo_id"
+                  value={filters.psicologo_id}
+                  onChange={handleFilterChange}
+                  className="form-select"
+                >
+                  <option value="">Todos los psicólogos</option>
+                  <option value="null">Sin psicólogo asignado</option>
+                  {psychologists.map(psychologist => (
+                    <option key={psychologist.id} value={psychologist.id}>
+                      {psychologist.nombre} {psychologist.apellidos}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="filter-edad-min" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edad Mínima
+                </label>
+                <input
+                  type="number"
+                  id="filter-edad-min"
+                  name="edad_min"
+                  value={filters.edad_min}
+                  onChange={handleFilterChange}
+                  min="0"
+                  max="120"
+                  className="form-input"
+                  placeholder="Ej. 18"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="filter-edad-max" className="block text-sm font-medium text-gray-700 mb-1">
+                  Edad Máxima
+                </label>
+                <input
+                  type="number"
+                  id="filter-edad-max"
+                  name="edad_max"
+                  value={filters.edad_max}
+                  onChange={handleFilterChange}
+                  min="0"
+                  max="120"
+                  className="form-input"
+                  placeholder="Ej. 65"
+                />
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  variant="secondary"
+                  onClick={clearFilters}
+                  className="w-full"
+                >
+                  Limpiar Filtros
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-3 text-sm text-gray-500">
+              {filteredPatients.length} pacientes encontrados
+            </div>
+          </div>
+        )}
+      </div>
+
+      {loading && patients.length === 0 ? (
+        <div className="text-center py-4">
+          <i className="fas fa-spinner fa-spin text-primary-500 text-2xl mb-2"></i>
+          <p>Cargando pacientes...</p>
+        </div>
+      ) : !loading && filteredPatients.length === 0 ? ( // Check loading state
+        <div className="text-center py-4">
+          <p className="text-gray-500">No se encontraron pacientes que coincidan con los filtros.</p>
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              className="mt-2"
+              onClick={() => openModal()}
+            >
+              Agregar Paciente
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort('nombre')}
+                >
+                  <div className="flex items-center">
+                    Nombre
+                    {sortField === 'nombre' && (
+                      <i className={`fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ml-1`}></i>
+                    )}
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort('edad')}
+                >
+                  <div className="flex items-center">
+                    Edad
+                    {sortField === 'edad' && (
+                      <i className={`fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ml-1`}></i>
+                    )}
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort('genero')}
+                >
+                  <div className="flex items-center">
+                    Género
+                    {sortField === 'genero' && (
+                      <i className={`fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ml-1`}></i>
+                    )}
+                  </div>
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Institución
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Psicólogo Asignado
+                </th>
+                {isAdmin && (
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentItems.map((patient) => (
+                <tr key={patient.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{patient.nombre}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{patient.edad || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">{patient.genero}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">
+                      {patient.instituciones ? patient.instituciones.nombre : '-'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500">
+                      {/* Buscar psicólogo en la lista cargada */}
+                      {patient.psicologo_id 
+                        ? psychologists.find(p => p.id === patient.psicologo_id)?.nombre + ' ' + psychologists.find(p => p.id === patient.psicologo_id)?.apellidos 
+                        : '-'}
+                    </div>
+                  </td>
+                  {isAdmin && (
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => openModal(patient)}
+                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        title="Editar paciente"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(patient.id, patient.nombre)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Eliminar paciente"
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Paginación */}
+      {filteredPatients.length > itemsPerPage && (
+        <div className="mt-4 flex justify-center">
+          <nav className="flex items-center">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded-l-md border ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <i className="fas fa-chevron-left"></i>
+            </button>
+
+            {[...Array(totalPages).keys()].map(number => (
+              <button
+                key={number + 1}
+                onClick={() => paginate(number + 1)}
+                className={`px-3 py-1 border-t border-b ${
+                  currentPage === number + 1
+                    ? 'bg-blue-50 text-blue-600 font-medium'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {number + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded-r-md border ${
+                currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <i className="fas fa-chevron-right"></i>
+            </button>
+          </nav>
+        </div>
+      )}
+
+      {/* Modal para crear/editar paciente */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={currentPatient ? 'Editar Paciente' : 'Nuevo Paciente'}
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre Completo *
+            </label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className={`form-input ${errors.nombre ? 'border-red-500' : ''}`}
+              placeholder="Ej. Juan Pérez Gómez"
+            />
+            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="fecha_nacimiento" className="block text-sm font-medium text-gray-700 mb-1">
+              Fecha de Nacimiento *
+            </label>
+            <input
+              type="date"
+              id="fecha_nacimiento"
+              name="fecha_nacimiento"
+              value={formData.fecha_nacimiento}
+              onChange={handleChange}
+              className={`form-input ${errors.fecha_nacimiento ? 'border-red-500' : ''}`}
+            />
+            {errors.fecha_nacimiento && <p className="mt-1 text-sm text-red-500">{errors.fecha_nacimiento}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="genero" className="block text-sm font-medium text-gray-700 mb-1">
+              Género *
+            </label>
+            <select
+              id="genero"
+              name="genero"
+              value={formData.genero}
+              onChange={handleChange}
+              className={`form-select ${errors.genero ? 'border-red-500' : ''}`}
+            >
+              <option value="">Seleccionar género</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+            </select>
+            {errors.genero && <p className="mt-1 text-sm text-red-500">{errors.genero}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="institucion_id" className="block text-sm font-medium text-gray-700 mb-1">
+              Institución *
+            </label>
+            <select
+              id="institucion_id"
+              name="institucion_id"
+              value={formData.institucion_id}
+              onChange={handleChange}
+              className={`form-select ${errors.institucion_id ? 'border-red-500' : ''}`}
+            >
+              <option value="">Seleccionar institución</option>
+              {institutions.map(institution => (
+                <option key={institution.id} value={institution.id}>
+                  {institution.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.institucion_id && <p className="mt-1 text-sm text-red-500">{errors.institucion_id}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="psicologo_id" className="block text-sm font-medium text-gray-700 mb-1">
+              Psicólogo Asignado
+            </label>
+            <select
+              id="psicologo_id"
+              name="psicologo_id"
+              value={formData.psicologo_id}
+              onChange={handleChange}
+              className="form-select"
+            >
+              <option value="">Sin psicólogo asignado</option>
+              {psychologists.map(psychologist => (
+                <option key={psychologist.id} value={psychologist.id}>
+                  {psychologist.nombre} {psychologist.apellidos}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="notas" className="block text-sm font-medium text-gray-700 mb-1">
+              Notas
+            </label>
+            <textarea
+              id="notas"
+              name="notas"
+              value={formData.notas}
+              onChange={handleChange}
+              rows="3"
+              className="form-textarea"
+              placeholder="Información adicional sobre el paciente"
+            ></textarea>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={closeModal}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  Guardando...
+                </>
+              ) : (
+                'Guardar'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};
+
+export default PatientsTab;

@@ -1,0 +1,639 @@
+import React, { useState, useEffect, useCallback } from 'react';
+// import { supabase } from '../../../api/supabaseClient'; // Remove direct supabase import
+import supabase from '../../../api/supabaseClient'; // Keep for auth.signUp
+import supabaseService from '../../../services/supabaseService'; // Import the service
+import { Button } from '../../../components/ui/Button';
+import { Modal } from '../../../components/ui/Modal';
+import { toast } from 'react-toastify';
+// import { initSupabaseAutomation } from '../../../utils/supabaseAutomation'; // Remove automation
+
+const PsychologistsTab = ({ isAdmin }) => {
+  const [psychologists, setPsychologists] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
+  const [loading, setLoading] = useState(false); // Initialize loading to false
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPsychologist, setCurrentPsychologist] = useState(null);
+
+  // --- REMOVE forceAdmin ---
+  // const forceAdmin = true;
+
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellidos: '',
+    email: '',
+    documento_identidad: '',
+    telefono: '',
+    institucion_id: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // --- REMOVE useEffect for supabaseAutomation ---
+
+  // Fetch data using useCallback and the service
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [psychologistsResult, institutionsResult] = await Promise.all([
+        supabaseService.getPsychologists(sortField, sortDirection),
+        supabaseService.getInstitutions()
+      ]);
+
+      if (psychologistsResult.error) {
+        console.error('Error al cargar psicólogos:', psychologistsResult.error);
+        toast.error('Error al cargar psicólogos. Mostrando datos locales si existen.');
+      }
+      setPsychologists(psychologistsResult.data || []);
+
+      if (institutionsResult.error) {
+        console.error('Error al cargar instituciones:', institutionsResult.error);
+        toast.error('Error al cargar instituciones. Mostrando datos locales si existen.');
+      }
+      setInstitutions(institutionsResult.data || []);
+
+    } catch (error) {
+      console.error('Error inesperado al cargar datos:', error);
+      toast.error('Ocurrió un error inesperado al cargar los datos.');
+      setPsychologists([]);
+      setInstitutions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [sortField, sortDirection]); // Dependencies for fetching
+
+  // Cargar datos al montar y cuando cambie el orden
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Abrir modal para crear/editar psicólogo
+  const openModal = (psychologist = null) => {
+    if (psychologist) {
+      setCurrentPsychologist(psychologist);
+      setFormData({
+        nombre: psychologist.nombre,
+        apellidos: psychologist.apellidos,
+        email: psychologist.email,
+        documento_identidad: psychologist.documento_identidad,
+        telefono: psychologist.telefono || '',
+        institucion_id: psychologist.institucion_id
+      });
+    } else {
+      setCurrentPsychologist(null);
+      setFormData({
+        nombre: '',
+        apellidos: '',
+        email: '',
+        documento_identidad: '',
+        telefono: '',
+        institucion_id: institutions.length > 0 ? institutions[0].id : ''
+      });
+    }
+    setErrors({});
+    setIsModalOpen(true);
+  };
+
+  // Cerrar modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Manejar cambios en el formulario
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Limpiar error del campo cuando el usuario escribe
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
+  };
+
+  // Validar formulario
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es obligatorio';
+    }
+
+    if (!formData.apellidos.trim()) {
+      newErrors.apellidos = 'Los apellidos son obligatorios';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es obligatorio';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'El email no es válido';
+    }
+
+    if (!formData.documento_identidad.trim()) {
+      newErrors.documento_identidad = 'El documento de identidad es obligatorio';
+    }
+
+    if (!formData.institucion_id) {
+      newErrors.institucion_id = 'La institución es obligatoria';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Enviar formulario
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const psychologistData = {
+        nombre: formData.nombre,
+        apellidos: formData.apellidos,
+        email: formData.email, // Email se usa para Auth, pero también se guarda aquí
+        documento_identidad: formData.documento_identidad,
+        telefono: formData.telefono,
+        institucion_id: formData.institucion_id,
+        // usuario_id se añadirá después si es creación
+      };
+
+      if (currentPsychologist) {
+        // Actualizar usando el servicio
+        // No se actualiza email ni usuario_id
+        const dataToUpdate = { ...psychologistData };
+        delete dataToUpdate.email; // No permitir cambio de email aquí
+
+        const { error } = await supabaseService.updatePsychologist(currentPsychologist.id, dataToUpdate);
+        if (error) throw error;
+        toast.success('Psicólogo actualizado correctamente');
+
+      } else {
+        // Crear nuevo psicólogo: Primero Auth, luego tabla psicologos via servicio
+
+        // 1. Crear usuario en Supabase Auth
+        console.log('Creando usuario en Auth para:', formData.email);
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: 'Temporal123!', // TODO: Considerar una mejor gestión de contraseñas
+          options: {
+            data: {
+              rol: 'psicologo', // Asegúrate que este metadato se use consistentemente
+              nombre_completo: `${formData.nombre} ${formData.apellidos}`
+            }
+          }
+        });
+
+        if (authError) {
+          console.error('Error al crear usuario en Auth:', authError);
+          // Verificar si el error es porque el usuario ya existe
+          if (authError.message.includes('User already registered')) {
+             toast.error('Error: Ya existe un usuario registrado con este email.');
+          } else {
+             toast.error(`Error al crear usuario: ${authError.message}`);
+          }
+          throw authError; // Detener el proceso
+        }
+
+        if (!authData.user) {
+           throw new Error('No se pudo obtener el ID del usuario creado en Auth.');
+        }
+
+        console.log('Usuario creado en Auth con ID:', authData.user.id);
+
+        // 2. Crear registro en tabla 'psicologos' usando el servicio
+        const psychologistPayload = {
+          ...psychologistData,
+          usuario_id: authData.user.id // Añadir el ID del usuario de Auth
+        };
+
+        console.log('Creando registro en tabla psicologos:', psychologistPayload);
+        const { error: createError } = await supabaseService.createPsychologist(psychologistPayload);
+
+        if (createError) {
+          console.error('Error al crear registro de psicólogo:', createError);
+          // TODO: Considerar eliminar el usuario de Auth si falla la creación en la tabla psicologos
+          toast.error(`Error al guardar datos del psicólogo: ${createError.message}`);
+          throw createError;
+        }
+
+        toast.success('Psicólogo creado correctamente (puede estar pendiente de sincronización)');
+      }
+
+      closeModal();
+      fetchData(); // Recargar datos
+
+    } catch (error) {
+      // Los errores específicos ya deberían haber mostrado un toast
+      console.error('Error final en handleSubmit:', error);
+      // Evitar mostrar toast duplicado si ya se mostró uno más específico
+      if (!toast.isActive('error-toast')) { // Asumiendo que los toasts de error tienen un ID
+         toast.error(`Error al ${currentPsychologist ? 'actualizar' : 'crear'} el psicólogo.`, { toastId: 'error-toast' });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Eliminar psicólogo
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Está seguro que desea eliminar este psicólogo? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Eliminar usando el servicio
+      // Nota: Esto solo elimina el registro de la tabla 'psicologos'.
+      // Considerar si también se debe eliminar el usuario de Supabase Auth.
+      const { error } = await supabaseService.deletePsychologist(id);
+
+      if (error) throw error;
+
+      toast.success('Psicólogo eliminado correctamente (puede estar pendiente de sincronización)');
+      fetchData(); // Recargar datos
+
+    } catch (error) {
+      console.error('Error al eliminar psicólogo:', error);
+      toast.error(`Error al eliminar el psicólogo: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filtrar psicólogos por término de búsqueda
+  const filteredPsychologists = psychologists.filter(psychologist =>
+    psychologist.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    psychologist.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    psychologist.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    psychologist.documento_identidad.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (psychologist.telefono && psychologist.telefono.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (psychologist.instituciones && psychologist.instituciones.nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Ordenar psicólogos
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Paginación
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredPsychologists.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPsychologists.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="mb-4 md:mb-0">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Buscar psicólogos..."
+              className="form-input pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i className="fas fa-search text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+        {/* Usar isAdmin directamente */}
+        {isAdmin && (
+          <Button
+            variant="primary"
+            onClick={() => openModal()}
+            className="flex items-center"
+            disabled={loading} // Deshabilitar si está cargando
+          >
+            <i className="fas fa-plus mr-2"></i> {/* Icono */}
+            Nuevo Psicólogo
+          </Button>
+        )}
+      </div>
+
+      {/* Indicador de carga */}
+      {loading && (
+         <div className="text-center py-4">
+          <i className="fas fa-spinner fa-spin text-primary-500 text-2xl mb-2"></i> {/* Icono */}
+          <p>Cargando psicólogos...</p>
+        </div>
+      )}
+
+       {/* Mensaje si no hay datos y no está cargando */}
+      {!loading && filteredPsychologists.length === 0 && (
+        <div className="text-center py-4">
+          <p className="text-gray-500">No se encontraron psicólogos</p>
+           {/* Usar isAdmin directamente */}
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              className="mt-2"
+              onClick={() => openModal()} // Permitir agregar si está vacío
+            >
+              Agregar Primer Psicólogo
+            </Button>
+          )}
+        </div>
+      )}
+
+       {/* Mostrar tabla solo si no está cargando y hay datos */}
+      {!loading && filteredPsychologists.length > 0 && (
+        <>
+          <div className="overflow-x-auto shadow rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100"> {/* Fondo ligeramente diferente */}
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200" // Estilo mejorado
+                    onClick={() => handleSort('nombre')}
+                  >
+                    Nombre
+                    {sortField === 'nombre' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )} {/* Iconos mejorados */}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                    onClick={() => handleSort('apellidos')}
+                  >
+                    Apellidos
+                    {sortField === 'apellidos' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                    onClick={() => handleSort('email')}
+                  >
+                    Email
+                    {sortField === 'email' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200"
+                    onClick={() => handleSort('documento_identidad')}
+                  >
+                    Documento
+                    {sortField === 'documento_identidad' && ( <span className="ml-1">{sortDirection === 'asc' ? '▲' : '▼'}</span> )}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Institución
+                  </th>
+                   {/* Usar isAdmin directamente */}
+                  {isAdmin && (
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {currentItems.map((psychologist) => (
+                  // Aplicar estilo si es un ID temporal
+                  <tr key={psychologist.id} className={`hover:bg-gray-50 ${supabaseService.isTemporaryId(psychologist.id) ? 'opacity-70 italic' : ''}`}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{psychologist.nombre}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{psychologist.apellidos}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psychologist.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psychologist.documento_identidad}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* Mostrar nombre de institución (puede venir anidado o necesitar búsqueda) */}
+                      {psychologist.instituciones?.nombre || institutions.find(inst => inst.id === psychologist.institucion_id)?.nombre || '-'}
+                    </td>
+                     {/* Usar isAdmin directamente */}
+                    {isAdmin && (
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3"> {/* Espacio entre botones */}
+                        <button
+                          onClick={() => openModal(psychologist)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Editar" // Tooltip
+                        >
+                          <i className="fas fa-edit"></i> {/* Icono */}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(psychologist.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Eliminar" // Tooltip
+                        >
+                          <i className="fas fa-trash-alt"></i> {/* Icono */}
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+           {/* Paginación (usar el mismo estilo que InstitutionsTab) */}
+           {totalPages > 1 && (
+             <div className="mt-6 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+               {/* ... (Copiar estructura de paginación de InstitutionsTab.jsx) ... */}
+               <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                 <div>
+                   <p className="text-sm text-gray-700">
+                     Mostrando <span className="font-medium">{indexOfFirstItem + 1}</span> a <span className="font-medium">{Math.min(indexOfLastItem, filteredPsychologists.length)}</span> de{' '}
+                     <span className="font-medium">{filteredPsychologists.length}</span> resultados
+                   </p>
+                 </div>
+                 <div>
+                   <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                     <button
+                       onClick={() => paginate(currentPage - 1)}
+                       disabled={currentPage === 1}
+                       className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                     >
+                       <span className="sr-only">Anterior</span>
+                       <i className="fas fa-chevron-left h-5 w-5" aria-hidden="true"></i>
+                     </button>
+                     {[...Array(totalPages).keys()].map(number => (
+                        <button
+                         key={number + 1}
+                         onClick={() => paginate(number + 1)}
+                         aria-current={currentPage === number + 1 ? 'page' : undefined}
+                         className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                           currentPage === number + 1
+                             ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                             : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                         }`}
+                       >
+                         {number + 1}
+                       </button>
+                     ))}
+                     <button
+                       onClick={() => paginate(currentPage + 1)}
+                       disabled={currentPage === totalPages}
+                       className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                     >
+                       <span className="sr-only">Siguiente</span>
+                        <i className="fas fa-chevron-right h-5 w-5" aria-hidden="true"></i>
+                     </button>
+                   </nav>
+                 </div>
+               </div>
+             </div>
+           )}
+         </>
+       )}
+
+       {/* Modal para crear/editar psicólogo */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={currentPsychologist ? 'Editar Psicólogo' : 'Nuevo Psicólogo'}
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
+              Nombre *
+            </label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className={`form-input ${errors.nombre ? 'border-red-500' : ''}`}
+              placeholder="Ej. Juan"
+            />
+            {errors.nombre && <p className="mt-1 text-sm text-red-500">{errors.nombre}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="apellidos" className="block text-sm font-medium text-gray-700 mb-1">
+              Apellidos *
+            </label>
+            <input
+              type="text"
+              id="apellidos"
+              name="apellidos"
+              value={formData.apellidos}
+              onChange={handleChange}
+              className={`form-input ${errors.apellidos ? 'border-red-500' : ''}`}
+              placeholder="Ej. Pérez Gómez"
+            />
+            {errors.apellidos && <p className="mt-1 text-sm text-red-500">{errors.apellidos}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`form-input ${errors.email ? 'border-red-500' : ''}`}
+              placeholder="Ej. juan.perez@ejemplo.com"
+              disabled={currentPsychologist} // No permitir cambiar el email si es edición
+            />
+            {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+            {currentPsychologist && (
+              <p className="mt-1 text-xs text-gray-500">El email no se puede modificar una vez creado el psicólogo.</p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="documento_identidad" className="block text-sm font-medium text-gray-700 mb-1">
+              Documento de Identidad *
+            </label>
+            <input
+              type="text"
+              id="documento_identidad"
+              name="documento_identidad"
+              value={formData.documento_identidad}
+              onChange={handleChange}
+              className={`form-input ${errors.documento_identidad ? 'border-red-500' : ''}`}
+              placeholder="Ej. 1234567890"
+            />
+            {errors.documento_identidad && <p className="mt-1 text-sm text-red-500">{errors.documento_identidad}</p>}
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">
+              Teléfono
+            </label>
+            <input
+              type="text"
+              id="telefono"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              className="form-input"
+              placeholder="Ej. 601 234 5678"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="institucion_id" className="block text-sm font-medium text-gray-700 mb-1">
+              Institución *
+            </label>
+            <select
+              id="institucion_id"
+              name="institucion_id"
+              value={formData.institucion_id}
+              onChange={handleChange}
+              className={`form-input ${errors.institucion_id ? 'border-red-500' : ''}`}
+            >
+              <option value="">Seleccionar institución</option>
+              {institutions.map(institution => (
+                <option key={institution.id} value={institution.id}>
+                  {institution.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.institucion_id && <p className="mt-1 text-sm text-red-500">{errors.institucion_id}</p>}
+          </div>
+
+          <div className="flex justify-end space-x-2 mt-6">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={closeModal}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin mr-2"></i>
+                  {currentPsychologist ? 'Actualizando...' : 'Guardando...'}
+                </>
+              ) : (
+                currentPsychologist ? 'Actualizar' : 'Guardar'
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+};
+
+export default PsychologistsTab;
